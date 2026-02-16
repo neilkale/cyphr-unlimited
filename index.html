@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cyphr Unlimited</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #fafafa;
+            display: flex;
+            justify-content: center;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            color: #1a1a1a;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 540px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px 16px;
+        }
+
+        /* ── HEADER ────────────────────────────────── */
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 8px 0 4px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 6px;
+        }
+
+        header h1 {
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #1a1a1a;
+        }
+
+        .header-buttons {
+            position: absolute;
+            right: 0;
+            display: flex;
+            gap: 5px;
+        }
+
+        .header-btn {
+            width: 32px; height: 32px;
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            transition: background 0.15s;
+        }
+        .header-btn:hover { background: #eee; }
+
+        /* ── PYRAMID ───────────────────────────────── */
+        #pyramid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--tile-gap);
+            padding: 18px 0 14px;
+        }
+
+        .pyramid-row {
+            display: flex;
+            gap: var(--tile-gap);
+        }
+
+        .tile {
+            width: var(--tile-size); height: var(--tile-size);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: default;
+            user-select: none;
+            transition: transform 0.25s, background 0.3s, box-shadow 0.3s;
+        }
+
+        .tile.solved {
+            background: #4CAF50;
+            box-shadow: 0 3px 0 #388E3C, 0 4px 6px rgba(0,0,0,0.12);
+        }
+
+        .tile.active {
+            background: #6d8f96;
+            box-shadow: 0 3px 0 #4e6e75, 0 4px 6px rgba(0,0,0,0.12);
+        }
+
+        .tile.locked {
+            background: #a4b0b5;
+            box-shadow: 0 3px 0 #8a969b, 0 4px 6px rgba(0,0,0,0.08);
+            opacity: 0.6;
+        }
+
+        .tile.missed {
+            background: #E53935;
+            box-shadow: 0 3px 0 #C62828, 0 4px 6px rgba(0,0,0,0.12);
+        }
+
+        .tile-letter {
+            font-size: calc(var(--tile-size) * 0.5);
+            font-weight: 800;
+            color: #1B5E20;
+            line-height: 1;
+        }
+        .tile.missed .tile-letter { color: #fff; }
+
+        .tile-number-corner {
+            position: absolute;
+            top: 2px; right: 4px;
+            font-size: calc(var(--tile-size) * 0.24);
+            font-weight: 700;
+            color: #1B2A4A;
+            line-height: 1;
+        }
+        .tile.missed .tile-number-corner { color: rgba(255,255,255,0.7); }
+
+        .tile-number-center {
+            font-size: calc(var(--tile-size) * 0.40);
+            font-weight: 700;
+            color: rgba(255,255,255,0.92);
+            line-height: 1;
+        }
+
+        /* tile animations */
+        @keyframes tilePop {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .tile.pop { animation: tilePop 0.35s ease; }
+
+        @keyframes tileWin {
+            0%   { transform: translateY(0); }
+            40%  { transform: translateY(-12px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* ── STATUS ────────────────────────────────── */
+        #status {
+            text-align: center;
+            padding: 8px 0 14px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            color: #444;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── KEYBOARD ──────────────────────────────── */
+        #keyboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            padding-bottom: 8px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .key {
+            width: var(--key-size); height: var(--key-size);
+            border-radius: 50%;
+            border: none;
+            font-size: calc(var(--key-size) * 0.38);
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s, color 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .key:active { transform: scale(0.9); }
+
+        .key.unused  { background: #9E9E9E; color: #fff; }
+        .key.unused:hover  { background: #757575; }
+        .key.correct { background: #4CAF50; color: #fff; }
+        .key.wrong   { background: #464646; color: #6e6e6e; }
+
+        /* ── MODALS ────────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(3px);
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.hidden { display: none; }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 28px 26px 24px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+            position: relative;
+        }
+
+        .modal-box h2 {
+            margin-bottom: 14px;
+            font-size: 22px;
+        }
+
+        .modal-box p {
+            margin-bottom: 10px;
+            color: #555;
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 14px;
+            background: none; border: none;
+            font-size: 26px; cursor: pointer;
+            color: #aaa; line-height: 1;
+        }
+        .modal-close:hover { color: #555; }
+
+        .modal-btn {
+            background: #4CAF50; color: #fff;
+            border: none;
+            padding: 11px 32px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.2s;
+            letter-spacing: 1px;
+        }
+        .modal-btn:hover { background: #388E3C; }
+
+        /* word reveal rows in game-over modal */
+        .word-reveal { display: flex; gap: 4px; justify-content: center; margin: 5px 0; }
+        .word-reveal-cell {
+            width: 28px; height: 28px;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px;
+        }
+        .word-reveal-cell.ok   { background: #4CAF50; color: #1B5E20; }
+        .word-reveal-cell.miss { background: #E53935; color: #fff; }
+
+        /* stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .stat-item { text-align: center; }
+        .stat-val  { font-size: 28px; font-weight: 800; color: #1a1a1a; }
+        .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* shake animation for wrong guess */
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-7px); }
+            40%     { transform: translateX(7px); }
+            60%     { transform: translateX(-4px); }
+            80%     { transform: translateX(4px); }
+        }
+        .shake { animation: shake 0.35s ease; }
+
+        /* ── RESPONSIVE ────────────────────────────── */
+        :root {
+            --tile-size: 58px;
+            --tile-gap: 5px;
+            --key-size: 44px;
+        }
+        @media (max-width: 480px) {
+            :root { --tile-size: 48px; --tile-gap: 4px; --key-size: 38px; }
+            header h1 { font-size: 24px; letter-spacing: 4px; }
+            #status { font-size: 13px; letter-spacing: 2px; }
+        }
+        @media (max-width: 370px) {
+            :root { --tile-size: 40px; --tile-gap: 3px; --key-size: 33px; }
+        }
+
+        /* loading overlay */
+        #loading {
+            position: fixed; inset: 0;
+            background: #fafafa;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 999;
+            font-size: 20px; font-weight: 700; color: #888;
+            letter-spacing: 4px;
+            transition: opacity 0.3s;
+        }
+        #loading.done { opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="loading">CYPHR</div>
+
+<div id="app">
+    <header>
+        <h1>CYPHR</h1>
+        <div class="header-buttons">
+            <button class="header-btn" id="btnNew" title="New Game">&#x21bb;</button>
+            <button class="header-btn" id="btnHelp" title="How to Play">?</button>
+            <button class="header-btn" id="btnStats" title="Stats">%</button>
+        </div>
+    </header>
+
+    <div id="pyramid"></div>
+    <div id="status">GUESSES REMAINING: 26</div>
+    <div id="keyboard"></div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modal-overlay hidden" id="modalHelp">
+    <div class="modal-box">
+        <button class="modal-close" data-close="modalHelp">&times;</button>
+        <h2>How to Play</h2>
+        <p>Start from the <strong>top</strong> of the pyramid and guess the letter in each tile based on its <strong>number</strong>.</p>
+        <p>Each number corresponds to a letter, and this code applies to the <strong>entire pyramid</strong>. When you guess correctly, the tile turns <span style="color:#4CAF50;font-weight:700;">green</span> and the number is shown in the corner.</p>
+        <p>Each row forms a <strong>word</strong>. Complete a word to unlock the next row. You don&rsquo;t need to guess letters in order!</p>
+        <p>You have <strong>26 incorrect guesses</strong> before the game ends.</p>
+        <p style="margin-top:14px;color:#999;font-size:12px;">Unlimited practice &mdash; hit &#x21bb; for a new puzzle anytime.</p>
+        <button class="modal-btn" data-close="modalHelp">GOT IT!</button>
+    </div>
+</div>
+
+<!-- STATS MODAL -->
+<div class="modal-overlay hidden" id="modalStats">
+    <div class="modal-box">
+        <button class="modal-close" data-close="modalStats">&times;</button>
+        <h2>Your Statistics</h2>
+        <div class="stats-grid">
+            <div class="stat-item"><div class="stat-val" id="statPlayed">0</div><div class="stat-label">Played</div></div>
+            <div class="stat-item"><div class="stat-val" id="statWinPct">0</div><div class="stat-label">Win %</div></div>
+            <div class="stat-item"><div class="stat-val" id="statStreak">0</div><div class="stat-label">Streak</div></div>
+            <div class="stat-item"><div class="stat-val" id="statBest">0</div><div class="stat-label">Best</div></div>
+        </div>
+        <p id="statAvgMsg" style="color:#888;font-size:13px;"></p>
+        <button class="modal-btn" data-close="modalStats">CLOSE</button>
+    </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div class="modal-overlay hidden" id="modalGameOver">
+    <div class="modal-box">
+        <h2 id="goTitle"></h2>
+        <p id="goMsg"></p>
+        <div id="goWords"></div>
+        <button class="modal-btn" id="btnPlayAgain">PLAY AGAIN</button>
+    </div>
+</div>
+
+<script>
+/* ================================================================
+   CYPHR UNLIMITED  –  Practice clone of cyphrgame.com
+   ================================================================ */
+
+// ── CONSTANTS ──────────────────────────────────────────────────
+const KB_ROWS = [
+    ['Q','W','E','R','T','Y','U','I','O','P'],
+    ['A','S','D','F','G','H','J','K','L'],
+    ['Z','X','C','V','B','N','M']
+];
+const MAX_WRONG = 26;
+
+// ── STATE ──────────────────────────────────────────────────────
+let wordPools = {};          // length → [words]
+let words     = [];          // 7 chosen words (uppercase)
+let cipher    = {};          // letter → number
+let correct   = new Set();   // globally correct letters (for keyboard)
+let wrong     = new Set();   // incorrectly guessed letters
+let revealed  = [];          // per-row Sets of revealed letters
+let activeRow = 0;
+let remaining = MAX_WRONG;
+let over      = false;
+let won       = false;
+let t0        = 0;           // start timestamp
+
+// ── STATS (localStorage) ──────────────────────────────────────
+const STAT_KEY = 'cyphr_stats';
+function loadStats() {
+    try { return JSON.parse(localStorage.getItem(STAT_KEY)) || defaultStats(); }
+    catch { return defaultStats(); }
+}
+function defaultStats() { return { played:0, wins:0, streak:0, best:0, totalWrong:0 }; }
+function saveStats(s) { try { localStorage.setItem(STAT_KEY, JSON.stringify(s)); } catch {} }
+
+function recordGame(didWin, wrongCount) {
+    const s = loadStats();
+    s.played++;
+    if (didWin) { s.wins++; s.streak++; s.best = Math.max(s.best, s.streak); }
+    else { s.streak = 0; }
+    s.totalWrong += wrongCount;
+    saveStats(s);
+}
+
+function showStats() {
+    const s = loadStats();
+    document.getElementById('statPlayed').textContent  = s.played;
+    document.getElementById('statWinPct').textContent   = s.played ? Math.round(100 * s.wins / s.played) : 0;
+    document.getElementById('statStreak').textContent   = s.streak;
+    document.getElementById('statBest').textContent     = s.best;
+    document.getElementById('statAvgMsg').textContent   = s.played
+        ? `Average mistakes per game: ${(s.totalWrong / s.played).toFixed(1)}`
+        : 'Play a game to see your averages!';
+    openModal('modalStats');
+}
+
+// ── WORD LOADING ──────────────────────────────────────────────
+async function loadWords() {
+    let lines = [];
+    try {
+        const resp = await fetch('english_words.txt');
+        const text = await resp.text();
+        lines = text.split('\n').map(w => w.trim().toLowerCase()).filter(w => /^[a-z]+$/.test(w));
+    } catch {}
+
+    for (let len = 1; len <= 7; len++) {
+        wordPools[len] = lines.filter(w => w.length === len);
+    }
+
+    // make sure 1-letter pool has at least a & i
+    if (!wordPools[1].length) wordPools[1] = ['a','i'];
+    if (!wordPools[1].includes('a')) wordPools[1].push('a');
+    if (!wordPools[1].includes('i')) wordPools[1].push('i');
+
+    // fallbacks for 2-7
+    const fb = {
+        2: ['of','to','in','is','it','be','as','at','we','he','by','or','on','do','if','my','up','an','go','no'],
+        3: ['the','and','for','are','but','not','you','all','can','had','her','was','one','our','out','day','get'],
+        4: ['that','with','have','this','will','your','from','they','been','come','each','find','know','make'],
+        5: ['about','would','there','their','which','could','other','after','first','great','right','think'],
+        6: ['people','before','should','number','change','around','answer','better','family','simple'],
+        7: ['because','between','country','through','picture','another','problem','already','history']
+    };
+    for (let len = 2; len <= 7; len++) {
+        if (!wordPools[len].length) wordPools[len] = fb[len];
+    }
+}
+
+// ── UTILITIES ─────────────────────────────────────────────────
+function shuffle(a) {
+    a = [...a];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ── NEW GAME ──────────────────────────────────────────────────
+function newGame() {
+    words = [];
+    for (let len = 1; len <= 7; len++) words.push(pick(wordPools[len]).toUpperCase());
+
+    const nums = shuffle(Array.from({length:26}, (_,i) => i+1));
+    cipher = {};
+    for (let i = 0; i < 26; i++) cipher[String.fromCharCode(65+i)] = nums[i];
+
+    correct   = new Set();
+    wrong     = new Set();
+    revealed  = Array.from({length: 7}, () => new Set());
+    activeRow = 0;
+    remaining = MAX_WRONG;
+    over      = false;
+    won       = false;
+    t0        = Date.now();
+
+    render();
+}
+
+// ── GUESS ─────────────────────────────────────────────────────
+function guess(letter) {
+    letter = letter.toUpperCase();
+    if (over || !/^[A-Z]$/.test(letter)) return;
+    if (wrong.has(letter)) return;                        // already wrong, ignore
+    if (revealed[activeRow].has(letter)) return;          // already shown in this row
+
+    const word = words[activeRow];
+    const wordLetters = new Set(word);
+
+    if (wordLetters.has(letter)) {
+        // Correct – reveal only in the active row
+        const guessedRow = activeRow;
+        correct.add(letter);
+        revealed[activeRow].add(letter);
+        advance();
+        render();
+        animateRevealed(letter, guessedRow);
+        if (over) setTimeout(endGame, 650);
+    } else if (correct.has(letter)) {
+        // Already correct from an earlier row but not in this word – ignore silently
+        return;
+    } else {
+        // Wrong
+        wrong.add(letter);
+        remaining--;
+        if (remaining <= 0) { over = true; }
+        render();
+        document.getElementById('pyramid').classList.add('shake');
+        setTimeout(() => document.getElementById('pyramid').classList.remove('shake'), 350);
+        if (over) setTimeout(endGame, 650);
+    }
+}
+
+function advance() {
+    const prevRow = activeRow;
+    while (activeRow < 7) {
+        const w = words[activeRow];
+        if ([...new Set(w)].every(l => revealed[activeRow].has(l))) activeRow++;
+        else break;
+    }
+    // Reset keyboard when moving to a new row so all keys are selectable again
+    if (activeRow !== prevRow) { wrong = new Set(); correct = new Set(); }
+    if (activeRow >= 7) { over = true; won = true; }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+    renderPyramid();
+    renderKeyboard();
+    document.getElementById('status').textContent = `GUESSES REMAINING: ${remaining}`;
+}
+
+function renderPyramid() {
+    const el = document.getElementById('pyramid');
+    el.innerHTML = '';
+
+    for (let r = 0; r < 7; r++) {
+        const row = document.createElement('div');
+        row.className = 'pyramid-row';
+        const w = words[r];
+
+        for (let c = 0; c < w.length; c++) {
+            const ch  = w[c];
+            const num = cipher[ch];
+            const solved = revealed[r] && revealed[r].has(ch);
+
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+
+            if (solved) {
+                tile.classList.add('solved');
+                tile.innerHTML = `<span class="tile-letter">${ch}</span><span class="tile-number-corner">${num}</span>`;
+            } else if (over && !won) {
+                tile.classList.add('missed');
+                tile.innerHTML = `<span class="tile-letter">${ch}</span><span class="tile-number-corner">${num}</span>`;
+            } else if (r === activeRow) {
+                tile.classList.add('active');
+                tile.innerHTML = `<span class="tile-number-center">${num}</span>`;
+            } else {
+                tile.classList.add('locked');
+                tile.innerHTML = `<span class="tile-number-center">${num}</span>`;
+            }
+            row.appendChild(tile);
+        }
+        el.appendChild(row);
+    }
+}
+
+function renderKeyboard() {
+    const el = document.getElementById('keyboard');
+    el.innerHTML = '';
+
+    for (const letters of KB_ROWS) {
+        const row = document.createElement('div');
+        row.className = 'keyboard-row';
+        for (const l of letters) {
+            const btn = document.createElement('button');
+            btn.textContent = l;
+            btn.className = 'key ' + (correct.has(l) ? 'correct' : wrong.has(l) ? 'wrong' : 'unused');
+            btn.addEventListener('click', () => guess(l));
+            row.appendChild(btn);
+        }
+        el.appendChild(row);
+    }
+}
+
+// ── ANIMATIONS ────────────────────────────────────────────────
+function animateRevealed(letter, rowIdx) {
+    const rows = document.querySelectorAll('.pyramid-row');
+    if (!rows[rowIdx]) return;
+    rows[rowIdx].querySelectorAll('.tile.solved').forEach(tile => {
+        const lEl = tile.querySelector('.tile-letter');
+        if (lEl && lEl.textContent === letter) {
+            tile.classList.add('pop');
+            setTimeout(() => tile.classList.remove('pop'), 350);
+        }
+    });
+}
+
+function animateWin() {
+    const tiles = document.querySelectorAll('.tile.solved');
+    tiles.forEach((t, i) => {
+        setTimeout(() => {
+            t.style.animation = 'tileWin 0.45s ease';
+            setTimeout(() => { t.style.animation = ''; }, 450);
+        }, i * 60);
+    });
+}
+
+// ── END GAME ──────────────────────────────────────────────────
+function endGame() {
+    const totalMistakes = MAX_WRONG - remaining;
+    recordGame(won, totalMistakes);
+
+    const title = document.getElementById('goTitle');
+    const msg   = document.getElementById('goMsg');
+    const wc    = document.getElementById('goWords');
+
+    if (won) {
+        const sec = Math.floor((Date.now() - t0) / 1000);
+        const m = Math.floor(sec / 60), s = sec % 60;
+        title.textContent = 'You Won!';
+        title.style.color = '#4CAF50';
+        msg.textContent = `Solved in ${m}m ${String(s).padStart(2,'0')}s with ${totalMistakes} mistake${totalMistakes !== 1 ? 's' : ''}.`;
+        animateWin();
+    } else {
+        title.textContent = 'Game Over';
+        title.style.color = '#E53935';
+        msg.textContent = 'Better luck next time! The words were:';
+    }
+
+    // word reveal
+    wc.innerHTML = '';
+    words.forEach((w, i) => {
+        const row = document.createElement('div');
+        row.className = 'word-reveal';
+        for (const ch of w) {
+            const cell = document.createElement('div');
+            cell.className = 'word-reveal-cell ' + (revealed[i].has(ch) ? 'ok' : 'miss');
+            cell.textContent = ch;
+            row.appendChild(cell);
+        }
+        wc.appendChild(row);
+    });
+
+    openModal('modalGameOver');
+}
+
+// ── MODALS ────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── EVENT LISTENERS ───────────────────────────────────────────
+function setup() {
+    // physical keyboard
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const k = e.key;
+        if (/^[a-zA-Z]$/.test(k)) { guess(k); e.preventDefault(); }
+    });
+
+    // header buttons
+    document.getElementById('btnNew').addEventListener('click', () => {
+        if (!over && (correct.size || wrong.size)) {
+            if (!confirm('Start a new game? Progress will be lost.')) return;
+        }
+        newGame();
+    });
+    document.getElementById('btnHelp').addEventListener('click',  () => openModal('modalHelp'));
+    document.getElementById('btnStats').addEventListener('click', () => showStats());
+    document.getElementById('btnPlayAgain').addEventListener('click', () => { closeModal('modalGameOver'); newGame(); });
+
+    // close buttons & backdrop clicks
+    document.querySelectorAll('[data-close]').forEach(btn =>
+        btn.addEventListener('click', () => closeModal(btn.dataset.close))
+    );
+    document.querySelectorAll('.modal-overlay').forEach(m =>
+        m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); })
+    );
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+(async function init() {
+    await loadWords();
+    setup();
+    newGame();
+    // hide loader
+    const loader = document.getElementById('loading');
+    loader.classList.add('done');
+    setTimeout(() => loader.remove(), 400);
+})();
+</script>
+</body>
+</html>
