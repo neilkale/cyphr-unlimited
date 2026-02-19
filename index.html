@@ -176,15 +176,20 @@
 
         .keyboard-row {
             display: flex;
-            gap: 5px;
+            gap: clamp(3px, 1vw, 5px);
             justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 0 4px;
         }
 
         .key {
-            width: var(--key-size); height: var(--key-size);
+            flex: 0 1 var(--key-size);
+            aspect-ratio: 1;
+            max-width: var(--key-size);
             border-radius: 50%;
             border: none;
-            font-size: calc(var(--key-size) * 0.38);
+            font-size: clamp(12px, 3.5vw, 16px);
             font-weight: 700;
             cursor: pointer;
             display: flex;
