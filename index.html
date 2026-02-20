@@ -176,17 +176,15 @@
 
         .keyboard-row {
             display: flex;
-            gap: clamp(3px, 1vw, 5px);
+            gap: var(--key-gap);
             justify-content: center;
-            width: 100%;
-            max-width: 500px;
             padding: 0 4px;
         }
 
         .key {
-            flex: 0 1 var(--key-size);
-            aspect-ratio: 1;
-            max-width: var(--key-size);
+            width: var(--key-computed);
+            height: var(--key-computed);
+            flex: 0 0 var(--key-computed);
             border-radius: 50%;
             border: none;
             font-size: clamp(12px, 3.5vw, 16px);
@@ -302,15 +300,17 @@
         :root {
             --tile-size: 58px;
             --tile-gap: 5px;
-            --key-size: 44px;
+            --key-gap: clamp(3px, 1vw, 5px);
+            /* uniform key size: fit 10 keys + 9 gaps + 8px padding in viewport */
+            --key-computed: min(44px, calc((100vw - 8px - 9 * var(--key-gap)) / 10));
         }
         @media (max-width: 480px) {
-            :root { --tile-size: 48px; --tile-gap: 4px; --key-size: 38px; }
+            :root { --tile-size: 48px; --tile-gap: 4px; }
             header h1 { font-size: 24px; letter-spacing: 4px; }
             #status { font-size: 13px; letter-spacing: 2px; }
         }
         @media (max-width: 370px) {
-            :root { --tile-size: 40px; --tile-gap: 3px; --key-size: 33px; }
+            :root { --tile-size: 40px; --tile-gap: 3px; }
         }
 
         /* loading overlay */
